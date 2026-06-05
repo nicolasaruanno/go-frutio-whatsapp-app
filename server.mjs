@@ -1,0 +1,135 @@
+import { createServer } from "node:http";
+import { readFile } from "node:fs/promises";
+import { extname, join, normalize } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import {
+  clamp,
+  getCatalog,
+  getPublicConfig,
+  localizedText,
+  normalizeProduct,
+  sanitizePhone,
+  stripHtml,
+} from "./lib/catalog.mjs";
+
+const rootDir = fileURLToPath(new URL(".", import.meta.url));
+const publicDir = join(rootDir, "public");
+
+await loadEnv(join(rootDir, ".env"));
+
+const port = Number(process.env.PORT || 3000);
+
+const server = createServer(async (request, response) => {
+  try {
+    const url = new URL(request.url, `http://${request.headers.host}`);
+
+    if (request.method === "GET" && url.pathname === "/api/config") {
+      return sendJson(response, 200, getPublicConfig());
+    }
+
+    if (request.method === "GET" && url.pathname === "/api/products") {
+      try {
+        return sendJson(response, 200, await getCatalog());
+      } catch (error) {
+        console.error("No se pudieron obtener productos de Tiendanube:", error);
+        return sendJson(response, 502, {
+          error:
+            "No pudimos sincronizar Tiendanube. Revisá el ID de tienda, el token y el permiso read_products.",
+        });
+      }
+    }
+
+    if (request.method !== "GET") {
+      return sendJson(response, 405, { error: "Método no permitido" });
+    }
+
+    return serveStatic(url.pathname, response);
+  } catch (error) {
+    console.error(error);
+    return sendJson(response, 500, { error: "Error interno" });
+  }
+});
+
+const isMainModule =
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href;
+
+if (isMainModule) {
+  server.listen(port, "127.0.0.1", () => {
+    console.log(`Catálogo disponible en http://localhost:${port}`);
+  });
+}
+
+async function serveStatic(pathname, response) {
+  const requestedPath = pathname === "/" ? "/index.html" : pathname;
+  const safePath = normalize(requestedPath).replace(/^(\.\.[/\\])+/, "");
+  const filePath = join(publicDir, safePath);
+
+  if (!filePath.startsWith(publicDir)) {
+    return sendJson(response, 403, { error: "Acceso denegado" });
+  }
+
+  try {
+    const data = await readFile(filePath);
+    response.writeHead(200, {
+      "Content-Type": mimeType(filePath),
+      "Cache-Control": filePath.endsWith(".html")
+        ? "no-cache"
+        : "public, max-age=3600",
+    });
+    response.end(data);
+  } catch {
+    const index = await readFile(join(publicDir, "index.html"));
+    response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+    response.end(index);
+  }
+}
+
+function sendJson(response, status, body) {
+  response.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  response.end(JSON.stringify(body));
+}
+
+function mimeType(filePath) {
+  return (
+    {
+      ".html": "text/html; charset=utf-8",
+      ".css": "text/css; charset=utf-8",
+      ".js": "text/javascript; charset=utf-8",
+      ".svg": "image/svg+xml",
+      ".png": "image/png",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".webp": "image/webp",
+    }[extname(filePath)] || "application/octet-stream"
+  );
+}
+
+async function loadEnv(filePath) {
+  try {
+    const content = await readFile(filePath, "utf8");
+    for (const line of content.split(/\r?\n/)) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed.startsWith("#")) continue;
+      const separator = trimmed.indexOf("=");
+      if (separator === -1) continue;
+      const key = trimmed.slice(0, separator).trim();
+      let value = trimmed.slice(separator + 1).trim();
+      value = value.replace(/^(['"])(.*)\1$/, "$2");
+      if (!(key in process.env)) process.env[key] = value;
+    }
+  } catch (error) {
+    if (error.code !== "ENOENT") throw error;
+  }
+}
+
+export {
+  clamp,
+  localizedText,
+  normalizeProduct,
+  sanitizePhone,
+  stripHtml,
+};
