@@ -366,7 +366,15 @@ async function submitOrder(event) {
       }),
     });
     const result = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(result.error || "No se pudo registrar el pedido.");
+    if (!response.ok) {
+      const detail =
+        result.providerResponse && !String(result.error || "").includes(result.providerResponse)
+          ? ` ${result.providerResponse}`
+          : "";
+      throw new Error(
+        `${result.error || "No se pudo registrar el pedido."}${detail}`,
+      );
+    }
     order = result.order;
   } catch (error) {
     elements.checkoutStatus.textContent =

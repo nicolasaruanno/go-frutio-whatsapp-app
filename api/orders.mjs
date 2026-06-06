@@ -10,10 +10,19 @@ export default async function handler(request, response) {
     const order = await createTiendanubeOrder(request.body);
     return response.status(201).json({ order });
   } catch (error) {
-    console.error("No se pudo crear el pedido:", error);
+    console.error("No se pudo crear el pedido:", {
+      message: error.message,
+      code: error.code,
+      providerStatus: error.providerStatus,
+      providerResponse: error.providerResponse,
+      requestId: error.requestId,
+    });
     return response.status(error.status || 500).json({
       error: error.message || "No se pudo crear el pedido.",
       code: error.code || "internal_error",
+      providerStatus: error.providerStatus,
+      providerResponse: error.providerResponse,
+      requestId: error.requestId,
     });
   }
 }
