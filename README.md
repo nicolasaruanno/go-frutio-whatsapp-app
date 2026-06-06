@@ -40,10 +40,10 @@ quedan guardados en el navegador de ese dispositivo.
 ## Conectar Tiendanube
 
 La API oficial requiere una aplicación autorizada por OAuth 2 con los permisos
-`read_products` y `write_orders`.
+`read_products` y `write_draft_orders`.
 
 1. Creá una aplicación en el portal de socios de Tiendanube.
-2. Solicitá los permisos `read_products` y `write_orders`.
+2. Solicitá los permisos `read_products` y `write_draft_orders`.
 3. Instalá la aplicación en tu tienda y completá el flujo de autorización.
 4. Guardá en `.env` el `user_id` recibido como `TIENDANUBE_STORE_ID`.
 5. Guardá el token recibido como `TIENDANUBE_ACCESS_TOKEN`.
