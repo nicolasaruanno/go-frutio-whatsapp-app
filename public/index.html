@@ -168,11 +168,15 @@
           <span>Ahorrás comprando directo</span>
           <strong id="cart-savings">$0</strong>
         </div>
+        <div class="shipping-row">
+          <span>Envío</span>
+          <strong id="cart-shipping">$0</strong>
+        </div>
         <div class="total-row">
-          <span>Total estimado</span>
+          <span>Total final</span>
           <strong id="cart-total">$0</strong>
         </div>
-        <p class="total-note">El envío se coordina por WhatsApp.</p>
+        <p class="total-note" id="shipping-note"></p>
         <div class="checkout-title">
           <strong>Datos para el pedido</strong>
           <small>Los mismos datos básicos que usamos para cargarlo en Tiendanube.</small>
@@ -267,6 +271,19 @@
             <span>%</span>
           </div>
         </label>
+        <label>
+          Costo de envío
+          <input id="setting-shipping-cost" type="number" min="0" step="100" />
+          <small>Se suma cuando el pedido no alcanza el mínimo.</small>
+        </label>
+        <label>
+          Envío gratis desde
+          <input id="setting-free-shipping-threshold" type="number" min="0" step="1000" />
+        </label>
+        <label>
+          Alias para transferencias
+          <input id="setting-payment-alias" autocomplete="off" />
+        </label>
         <label class="toggle-setting">
           <span>
             Ocultar productos sin stock
@@ -293,6 +310,6 @@
     </aside>
 
     <div class="toast hidden" id="toast"></div>
-    <script type="module" src="/app.js?v=6"></script>
+    <script type="module" src="/app.js?v=7"></script>
   </body>
 </html>

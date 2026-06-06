@@ -31,6 +31,8 @@ test("prepara un pedido con descuento y nota de origen", () => {
     {
       reference: "web-123",
       customer,
+      shippingCost: 5000,
+      paymentAlias: "go.frutio",
       items: [{ variantId: "20", quantity: 2, directPrice: 8500 }],
     },
     products,
@@ -43,8 +45,9 @@ test("prepara un pedido con descuento y nota de origen", () => {
   assert.equal(result.payload.discount_type, "percentage");
   assert.match(result.payload.note, /PEDIDO ORIGINADO EN APP WHATSAPP/);
   assert.match(result.payload.note, /Avenida Siempre Viva 742 2 B/);
+  assert.match(result.payload.note, /Transferencia pendiente al alias: go.frutio/);
+  assert.equal(result.payload.shipping.cost, "5000.00");
   assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
-  assert.equal("shipping" in result.payload, false);
   assert.equal("cpf_cnpj" in result.payload, false);
 });
 
@@ -97,7 +100,7 @@ test("conserva los datos de entrega en la nota interna", () => {
   );
 
   assert.equal("cpf_cnpj" in result.payload, false);
-  assert.equal("shipping" in result.payload, false);
+  assert.equal(result.payload.shipping.cost, "0.00");
   assert.match(result.payload.note, /Entrega: Avenida Siempre Viva 742/);
   assert.match(result.payload.note, /Localidad: CABA, Buenos Aires, 1425/);
 });

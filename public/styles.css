@@ -696,10 +696,17 @@ footer p {
 }
 
 .savings-row,
+.shipping-row,
 .total-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
+}
+
+.shipping-row {
+  margin-bottom: 9px;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .savings-row {

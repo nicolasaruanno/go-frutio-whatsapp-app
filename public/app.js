@@ -23,7 +23,9 @@ const elements = {
   cartEmpty: document.querySelector("#cart-empty"),
   checkout: document.querySelector("#checkout"),
   cartSavings: document.querySelector("#cart-savings"),
+  cartShipping: document.querySelector("#cart-shipping"),
   cartTotal: document.querySelector("#cart-total"),
+  shippingNote: document.querySelector("#shipping-note"),
   whatsappButton: document.querySelector("#whatsapp-button"),
   checkoutForm: document.querySelector("#checkout"),
   checkoutStatus: document.querySelector("#checkout-status"),
@@ -47,6 +49,11 @@ const elements = {
   settingStoreName: document.querySelector("#setting-store-name"),
   settingWhatsapp: document.querySelector("#setting-whatsapp"),
   settingDiscount: document.querySelector("#setting-discount"),
+  settingShippingCost: document.querySelector("#setting-shipping-cost"),
+  settingFreeShippingThreshold: document.querySelector(
+    "#setting-free-shipping-threshold",
+  ),
+  settingPaymentAlias: document.querySelector("#setting-payment-alias"),
   settingHideOutOfStock: document.querySelector("#setting-hide-out-of-stock"),
   specialPriceList: document.querySelector("#special-price-list"),
   saveSettings: document.querySelector("#save-settings"),
@@ -84,6 +91,14 @@ async function init() {
         state.serverConfig.defaultDiscount,
       hideOutOfStock: state.settings?.hideOutOfStock ?? false,
       specialPrices: state.settings?.specialPrices || {},
+      shippingCost:
+        getSharedNumber("envio") ?? state.settings?.shippingCost ?? 0,
+      freeShippingThreshold:
+        getSharedNumber("envioGratisDesde") ??
+        state.settings?.freeShippingThreshold ??
+        130000,
+      paymentAlias:
+        getSharedText("alias") || state.settings?.paymentAlias || "go.frutio",
     };
 
     elements.syncStatus.textContent =
@@ -306,8 +321,15 @@ function renderCart() {
     .join("");
 
   const totals = calculateTotals(resolvedItems);
-  elements.cartTotal.textContent = formatMoney(totals.direct);
+  const shipping = getShippingCost(totals.direct);
+  elements.cartShipping.textContent =
+    shipping > 0 ? formatMoney(shipping) : "GRATIS";
+  elements.cartTotal.textContent = formatMoney(totals.direct + shipping);
   elements.cartSavings.textContent = formatMoney(totals.original - totals.direct);
+  elements.shippingNote.textContent =
+    shipping > 0
+      ? `Envío gratis desde ${formatMoney(state.settings.freeShippingThreshold)}.`
+      : "Este pedido tiene envío gratis.";
 }
 
 function resolveCartItem(item) {
@@ -358,6 +380,8 @@ async function submitOrder(event) {
       body: JSON.stringify({
         reference: crypto.randomUUID?.() || String(Date.now()),
         customer,
+        shippingCost: getShippingCost(calculateTotals(items).direct),
+        paymentAlias: state.settings.paymentAlias,
         items: items.map((item) => ({
           variantId: item.variant.id,
           quantity: item.quantity,
@@ -416,23 +440,24 @@ function getCustomerData() {
 function openWhatsAppOrder(items, customer, order) {
   const phone = String(state.settings.whatsappNumber || "").replace(/\D/g, "");
   const totals = calculateTotals(items);
+  const shipping = getShippingCost(totals.direct);
+  const finalTotal = totals.direct + shipping;
   const lines = [
-    `Hola, cargué el pedido #${order.number || order.id} en ${state.settings.storeName}:`,
+    `Hola, hice el pedido #${order.number || order.id} en ${state.settings.storeName}:`,
     "",
     ...items.map(
       (item) =>
         `• ${item.quantity}x ${item.product.name} (${item.variant.name}) — ${formatMoney(item.directPrice * item.quantity)}`,
     ),
     "",
-    `*Total estimado: ${formatMoney(totals.direct)}*`,
-    `Ahorro por compra directa: ${formatMoney(totals.original - totals.direct)}`,
+    `Productos: ${formatMoney(totals.direct)}`,
+    `Envío: ${shipping > 0 ? formatMoney(shipping) : "GRATIS"}`,
+    `*TOTAL A TRANSFERIR: ${formatMoney(finalTotal)}*`,
     "",
-    `Nombre: ${customer.firstName} ${customer.lastName}`,
-    `Dirección: ${customer.address} ${customer.number}${customer.floor ? `, ${customer.floor}` : ""}`,
-    `Localidad: ${customer.locality || customer.city}, ${customer.province} (${customer.zipcode})`,
-    customer.note ? `Aclaraciones: ${customer.note}` : "",
+    `Transferencia al alias: *${state.settings.paymentAlias}*`,
+    "*Pago pendiente.* Adjunto el comprobante en este chat para confirmar el pedido.",
     "",
-    "¿Me confirmás forma de pago y entrega? Gracias.",
+    "Gracias.",
   ].filter((line, index, all) => line || all[index - 1] !== "");
 
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
@@ -443,6 +468,10 @@ function populateSettings() {
   elements.settingStoreName.value = state.settings.storeName;
   elements.settingWhatsapp.value = state.settings.whatsappNumber;
   elements.settingDiscount.value = state.settings.discount;
+  elements.settingShippingCost.value = state.settings.shippingCost;
+  elements.settingFreeShippingThreshold.value =
+    state.settings.freeShippingThreshold;
+  elements.settingPaymentAlias.value = state.settings.paymentAlias;
   elements.settingHideOutOfStock.checked = state.settings.hideOutOfStock;
   elements.specialPriceList.innerHTML = state.products
     .map((product) => {
@@ -471,9 +500,15 @@ function saveSettings() {
     discount: clamp(Number(elements.settingDiscount.value), 0, 30),
     hideOutOfStock: elements.settingHideOutOfStock.checked,
     specialPrices,
+    shippingCost: Math.max(0, Number(elements.settingShippingCost.value) || 0),
+    freeShippingThreshold: Math.max(
+      0,
+      Number(elements.settingFreeShippingThreshold.value) || 130000,
+    ),
+    paymentAlias: elements.settingPaymentAlias.value.trim() || "go.frutio",
   };
   localStorage.setItem("direct-settings", JSON.stringify(state.settings));
-  updateSharedDiscountUrl(state.settings.discount);
+  updateSharedSettingsUrl();
   renderAll();
   closeDrawers();
   showToast("Ajustes guardados");
@@ -484,6 +519,23 @@ async function copySalesLink() {
   const url = new URL(window.location.href);
   url.hash = "";
   url.searchParams.set("descuento", String(discount));
+  url.searchParams.set(
+    "envio",
+    String(Math.max(0, Number(elements.settingShippingCost.value) || 0)),
+  );
+  url.searchParams.set(
+    "envioGratisDesde",
+    String(
+      Math.max(
+        0,
+        Number(elements.settingFreeShippingThreshold.value) || 130000,
+      ),
+    ),
+  );
+  url.searchParams.set(
+    "alias",
+    elements.settingPaymentAlias.value.trim() || "go.frutio",
+  );
   await navigator.clipboard.writeText(url.toString());
   showToast(`Link de venta con ${formatNumber(discount)}% copiado`);
 }
@@ -496,6 +548,9 @@ function resetSettings() {
     discount: state.serverConfig.defaultDiscount,
     hideOutOfStock: false,
     specialPrices: {},
+    shippingCost: 0,
+    freeShippingThreshold: 130000,
+    paymentAlias: "go.frutio",
   };
   populateSettings();
   renderAll();
@@ -524,9 +579,38 @@ function getSharedDiscount() {
   return Number.isFinite(discount) ? clamp(discount, 0, 30) : null;
 }
 
-function updateSharedDiscountUrl(discount) {
+function getSharedNumber(name) {
+  const value = new URLSearchParams(window.location.search).get(name);
+  if (value === null || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) && number >= 0 ? number : null;
+}
+
+function getSharedText(name) {
+  return new URLSearchParams(window.location.search).get(name)?.trim() || "";
+}
+
+function getShippingCost(productsTotal) {
+  const threshold = Math.max(
+    0,
+    Number(state.settings.freeShippingThreshold) || 130000,
+  );
+  if (productsTotal >= threshold) return 0;
+  return Math.max(0, Number(state.settings.shippingCost) || 0);
+}
+
+function updateSharedSettingsUrl() {
   const url = new URL(window.location.href);
-  url.searchParams.set("descuento", String(clamp(Number(discount), 0, 30)));
+  url.searchParams.set(
+    "descuento",
+    String(clamp(Number(state.settings.discount), 0, 30)),
+  );
+  url.searchParams.set("envio", String(state.settings.shippingCost));
+  url.searchParams.set(
+    "envioGratisDesde",
+    String(state.settings.freeShippingThreshold),
+  );
+  url.searchParams.set("alias", state.settings.paymentAlias);
   history.replaceState(null, "", url);
 }
 
