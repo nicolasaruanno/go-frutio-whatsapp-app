@@ -20,6 +20,10 @@
       "dest": "/api/products.mjs"
     },
     {
+      "src": "/api/orders",
+      "dest": "/api/orders.mjs"
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/public/assets/$1"
     },

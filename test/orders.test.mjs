@@ -1,0 +1,75 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { prepareDraftOrder } from "../lib/orders.mjs";
+
+const products = [
+  {
+    id: "10",
+    name: "Frutillas",
+    variants: [{ id: "20", price: 10000, stock: 5 }],
+  },
+];
+
+const customer = {
+  firstName: "Ana",
+  lastName: "Pérez",
+  email: "ana@example.com",
+  phone: "1112345678",
+  document: "30111222",
+  address: "Avenida Siempre Viva",
+  number: "742",
+  floor: "2 B",
+  locality: "Palermo",
+  city: "CABA",
+  province: "Buenos Aires",
+  zipcode: "1425",
+  note: "Llamar al llegar",
+};
+
+test("prepara un pedido con descuento y nota de origen", () => {
+  const result = prepareDraftOrder(
+    {
+      reference: "web-123",
+      customer,
+      items: [{ variantId: "20", quantity: 2, directPrice: 8500 }],
+    },
+    products,
+    { maxDiscount: 30 },
+  );
+
+  assert.equal(result.subtotal, 20000);
+  assert.equal(result.total, 17000);
+  assert.equal(result.payload.discount, "3000.00");
+  assert.equal(result.payload.sale_channel, "App WhatsApp");
+  assert.match(result.payload.note, /PEDIDO ORIGINADO EN APP WHATSAPP/);
+  assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
+});
+
+test("rechaza precios con descuento superior al permitido", () => {
+  assert.throws(
+    () =>
+      prepareDraftOrder(
+        {
+          customer,
+          items: [{ variantId: "20", quantity: 1, directPrice: 5000 }],
+        },
+        products,
+        { maxDiscount: 30 },
+      ),
+    /precio/i,
+  );
+});
+
+test("rechaza cantidades superiores al stock", () => {
+  assert.throws(
+    () =>
+      prepareDraftOrder(
+        {
+          customer,
+          items: [{ variantId: "20", quantity: 6, directPrice: 8500 }],
+        },
+        products,
+      ),
+    /stock/i,
+  );
+});

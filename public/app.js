@@ -25,8 +25,21 @@ const elements = {
   cartSavings: document.querySelector("#cart-savings"),
   cartTotal: document.querySelector("#cart-total"),
   whatsappButton: document.querySelector("#whatsapp-button"),
-  customerName: document.querySelector("#customer-name"),
-  customerLocation: document.querySelector("#customer-location"),
+  checkoutForm: document.querySelector("#checkout"),
+  checkoutStatus: document.querySelector("#checkout-status"),
+  customerFirstName: document.querySelector("#customer-first-name"),
+  customerLastName: document.querySelector("#customer-last-name"),
+  customerEmail: document.querySelector("#customer-email"),
+  customerPhone: document.querySelector("#customer-phone"),
+  customerDocument: document.querySelector("#customer-document"),
+  customerZipcode: document.querySelector("#customer-zipcode"),
+  customerAddress: document.querySelector("#customer-address"),
+  customerAddressNumber: document.querySelector("#customer-address-number"),
+  customerFloor: document.querySelector("#customer-floor"),
+  customerLocality: document.querySelector("#customer-locality"),
+  customerCity: document.querySelector("#customer-city"),
+  customerProvince: document.querySelector("#customer-province"),
+  customerNote: document.querySelector("#customer-note"),
   settingsButton: document.querySelector("#settings-button"),
   settingsDrawer: document.querySelector("#settings-drawer"),
   overlay: document.querySelector("#overlay"),
@@ -139,7 +152,7 @@ function bindEvents() {
 
   elements.saveSettings.addEventListener("click", saveSettings);
   elements.resetSettings.addEventListener("click", resetSettings);
-  elements.whatsappButton.addEventListener("click", sendWhatsAppOrder);
+  elements.checkoutForm.addEventListener("submit", submitOrder);
 }
 
 function renderAll() {
@@ -150,7 +163,7 @@ function renderAll() {
 
 function applyBranding() {
   const name = state.settings.storeName || "Catálogo directo";
-  const discount = clamp(Number(state.settings.discount), 0, 90);
+  const discount = clamp(Number(state.settings.discount), 0, 30);
   elements.storeName.textContent = name;
   elements.footerStoreName.textContent = name;
   elements.heroDiscount.textContent =
@@ -316,20 +329,82 @@ function calculateTotals(items) {
   );
 }
 
-function sendWhatsAppOrder() {
+async function submitOrder(event) {
+  event.preventDefault();
   const phone = String(state.settings.whatsappNumber || "").replace(/\D/g, "");
   if (phone.length < 10) {
     showToast("Revisá el número de WhatsApp en Ajustes.");
     return;
   }
-
   const items = state.cart.map(resolveCartItem).filter(Boolean);
   if (!items.length) return;
+
+  const customer = getCustomerData();
+  const originalLabel = elements.whatsappButton.innerHTML;
+  elements.whatsappButton.disabled = true;
+  elements.whatsappButton.textContent = "Registrando pedido…";
+  elements.checkoutStatus.classList.add("hidden");
+
+  let order;
+  try {
+    const response = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        reference: crypto.randomUUID?.() || String(Date.now()),
+        customer,
+        items: items.map((item) => ({
+          variantId: item.variant.id,
+          quantity: item.quantity,
+          directPrice: item.directPrice,
+        })),
+      }),
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.error || "No se pudo registrar el pedido.");
+    order = result.order;
+  } catch (error) {
+    elements.checkoutStatus.textContent =
+      `${error.message} El carrito quedó guardado; podés intentarlo nuevamente.`;
+    elements.checkoutStatus.classList.remove("hidden");
+    showToast("El pedido todavía no se registró.");
+    elements.whatsappButton.disabled = false;
+    elements.whatsappButton.innerHTML = originalLabel;
+    return;
+  }
+
+  openWhatsAppOrder(items, customer, order);
+  state.cart = [];
+  persistCart();
+  renderCart();
+  elements.checkoutForm.reset();
+  elements.whatsappButton.disabled = false;
+  elements.whatsappButton.innerHTML = originalLabel;
+}
+
+function getCustomerData() {
+  return {
+    firstName: elements.customerFirstName.value.trim(),
+    lastName: elements.customerLastName.value.trim(),
+    email: elements.customerEmail.value.trim(),
+    phone: elements.customerPhone.value.trim(),
+    document: elements.customerDocument.value.trim(),
+    zipcode: elements.customerZipcode.value.trim(),
+    address: elements.customerAddress.value.trim(),
+    number: elements.customerAddressNumber.value.trim(),
+    floor: elements.customerFloor.value.trim(),
+    locality: elements.customerLocality.value.trim(),
+    city: elements.customerCity.value.trim(),
+    province: elements.customerProvince.value.trim(),
+    note: elements.customerNote.value.trim(),
+  };
+}
+
+function openWhatsAppOrder(items, customer, order) {
+  const phone = String(state.settings.whatsappNumber || "").replace(/\D/g, "");
   const totals = calculateTotals(items);
-  const name = elements.customerName.value.trim();
-  const location = elements.customerLocation.value.trim();
   const lines = [
-    `Hola, quiero hacer este pedido en ${state.settings.storeName}:`,
+    `Hola, cargué el pedido #${order.number || order.id} en ${state.settings.storeName}:`,
     "",
     ...items.map(
       (item) =>
@@ -339,10 +414,12 @@ function sendWhatsAppOrder() {
     `*Total estimado: ${formatMoney(totals.direct)}*`,
     `Ahorro por compra directa: ${formatMoney(totals.original - totals.direct)}`,
     "",
-    name ? `Nombre: ${name}` : "",
-    location ? `Localidad: ${location}` : "",
+    `Nombre: ${customer.firstName} ${customer.lastName}`,
+    `Dirección: ${customer.address} ${customer.number}${customer.floor ? `, ${customer.floor}` : ""}`,
+    `Localidad: ${customer.locality || customer.city}, ${customer.province} (${customer.zipcode})`,
+    customer.note ? `Aclaraciones: ${customer.note}` : "",
     "",
-    "¿Me confirmás stock, forma de pago y entrega? Gracias.",
+    "¿Me confirmás forma de pago y entrega? Gracias.",
   ].filter((line, index, all) => line || all[index - 1] !== "");
 
   const url = `https://wa.me/${phone}?text=${encodeURIComponent(lines.join("\n"))}`;
@@ -378,7 +455,7 @@ function saveSettings() {
   state.settings = {
     storeName: elements.settingStoreName.value.trim() || "Catálogo directo",
     whatsappNumber: elements.settingWhatsapp.value.replace(/\D/g, ""),
-    discount: clamp(Number(elements.settingDiscount.value), 0, 90),
+    discount: clamp(Number(elements.settingDiscount.value), 0, 30),
     hideOutOfStock: elements.settingHideOutOfStock.checked,
     specialPrices,
   };
@@ -413,7 +490,7 @@ function updateConnectionNotice(source) {
 function getDirectPrice(product, variant) {
   const special = Number(state.settings.specialPrices[product.id]);
   if (Number.isFinite(special) && special >= 0) return special;
-  const discount = clamp(Number(state.settings.discount), 0, 90);
+  const discount = clamp(Number(state.settings.discount), 0, 30);
   return roundPrice(variant.price * (1 - discount / 100));
 }
 

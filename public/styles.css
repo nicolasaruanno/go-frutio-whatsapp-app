@@ -670,6 +670,8 @@ footer p {
 }
 
 .checkout {
+  max-height: 72dvh;
+  overflow-y: auto;
   padding: 20px 24px 24px;
   border-top: 1px solid var(--line);
   background: white;
@@ -714,6 +716,25 @@ footer p {
   margin-bottom: 14px;
 }
 
+.checkout-title {
+  margin: 18px 0 12px;
+}
+
+.checkout-title strong,
+.checkout-title small {
+  display: block;
+}
+
+.checkout-title small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.field-wide {
+  grid-column: 1 / -1;
+}
+
 .customer-fields label,
 .settings-content > label {
   color: var(--muted);
@@ -722,6 +743,7 @@ footer p {
 }
 
 .customer-fields input,
+.customer-fields textarea,
 .settings-content input {
   min-height: 42px;
   margin-top: 6px;
@@ -731,6 +753,19 @@ footer p {
   background: var(--paper);
   font-size: 13px;
   font-weight: 400;
+}
+
+.customer-fields textarea {
+  resize: vertical;
+  padding-top: 10px;
+  font-family: inherit;
+}
+
+.checkout-status {
+  margin: 12px 0 0;
+  color: #9b3429;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .whatsapp-button {

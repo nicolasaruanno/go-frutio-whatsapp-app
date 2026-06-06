@@ -11,6 +11,7 @@ import {
   sanitizePhone,
   stripHtml,
 } from "./lib/catalog.mjs";
+import { createTiendanubeOrder } from "./lib/orders.mjs";
 
 const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = join(rootDir, "public");
@@ -39,6 +40,20 @@ const server = createServer(async (request, response) => {
       }
     }
 
+    if (request.method === "POST" && url.pathname === "/api/orders") {
+      try {
+        const body = await readJsonBody(request);
+        return sendJson(response, 201, {
+          order: await createTiendanubeOrder(body),
+        });
+      } catch (error) {
+        return sendJson(response, error.status || 500, {
+          error: error.message || "No se pudo crear el pedido.",
+          code: error.code || "internal_error",
+        });
+      }
+    }
+
     if (request.method !== "GET") {
       return sendJson(response, 405, { error: "Método no permitido" });
     }
@@ -58,6 +73,15 @@ if (isMainModule) {
   server.listen(port, "127.0.0.1", () => {
     console.log(`Catálogo disponible en http://localhost:${port}`);
   });
+}
+
+async function readJsonBody(request) {
+  let body = "";
+  for await (const chunk of request) {
+    body += chunk;
+    if (body.length > 100_000) throw new Error("Pedido demasiado grande.");
+  }
+  return JSON.parse(body || "{}");
 }
 
 async function serveStatic(pathname, response) {

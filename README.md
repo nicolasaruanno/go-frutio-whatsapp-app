@@ -11,6 +11,8 @@ por WhatsApp.
 - Descuento general y precios especiales por producto.
 - Búsqueda, variantes, control de stock y carrito.
 - Mensaje de WhatsApp con cantidades, variantes, total, nombre y localidad.
+- Registro del pedido como orden pendiente de pago en Tiendanube.
+- Nota interna y canal de venta identificados como `App WhatsApp`.
 - Productos de demostración mientras se configura la conexión real.
 
 ## Probarlo
@@ -37,11 +39,11 @@ quedan guardados en el navegador de ese dispositivo.
 
 ## Conectar Tiendanube
 
-La API oficial requiere una aplicación autorizada por OAuth 2 con el permiso
-`read_products`.
+La API oficial requiere una aplicación autorizada por OAuth 2 con los permisos
+`read_products` y `write_orders`.
 
 1. Creá una aplicación en el portal de socios de Tiendanube.
-2. Solicitá únicamente el permiso `read_products`.
+2. Solicitá los permisos `read_products` y `write_orders`.
 3. Instalá la aplicación en tu tienda y completá el flujo de autorización.
 4. Guardá en `.env` el `user_id` recibido como `TIENDANUBE_STORE_ID`.
 5. Guardá el token recibido como `TIENDANUBE_ACCESS_TOKEN`.
@@ -55,9 +57,9 @@ Documentación oficial:
 - Autenticación: https://tiendanube.github.io/api-documentation/authentication
 - Productos: https://tiendanube.github.io/api-documentation/resources/product
 
-## Importante sobre los pedidos
+## Pedidos
 
-Este MVP no crea una orden dentro de Tiendanube. Envía una solicitud de pedido
-por WhatsApp y conserva el stock de Tiendanube como referencia. La confirmación,
-el medio de pago, el envío y cualquier actualización de stock se coordinan
-después.
+El sistema crea una orden pendiente de pago en Tiendanube y luego abre WhatsApp
+con su número. La orden incluye el domicilio, el descuento aplicado y una nota
+interna que identifica su origen. El costo y la modalidad final de envío se
+coordinan por WhatsApp.
