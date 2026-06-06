@@ -24,10 +24,6 @@
       "dest": "/api/orders.mjs"
     },
     {
-      "src": "/api/order-diagnostic",
-      "dest": "/api/order-diagnostic.mjs"
-    },
-    {
       "src": "/assets/(.*)",
       "dest": "/public/assets/$1"
     },

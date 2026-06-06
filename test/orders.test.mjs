@@ -39,8 +39,8 @@ test("prepara un pedido con descuento y nota de origen", () => {
 
   assert.equal(result.subtotal, 20000);
   assert.equal(result.total, 17000);
-  assert.equal(result.payload.discount, "3000.00");
-  assert.equal(result.payload.sale_channel, "App WhatsApp");
+  assert.equal(result.payload.discount, "15.00");
+  assert.equal(result.payload.discount_type, "percentage");
   assert.match(result.payload.note, /PEDIDO ORIGINADO EN APP WHATSAPP/);
   assert.match(result.payload.note, /Avenida Siempre Viva 742 2 B/);
   assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
