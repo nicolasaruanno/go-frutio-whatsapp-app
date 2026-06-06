@@ -50,6 +50,7 @@ const elements = {
   settingHideOutOfStock: document.querySelector("#setting-hide-out-of-stock"),
   specialPriceList: document.querySelector("#special-price-list"),
   saveSettings: document.querySelector("#save-settings"),
+  copySalesLink: document.querySelector("#copy-sales-link"),
   resetSettings: document.querySelector("#reset-settings"),
   toast: document.querySelector("#toast"),
 };
@@ -72,12 +73,15 @@ async function init() {
     state.serverConfig = await configResponse.json();
     const catalog = await productsResponse.json();
     state.products = catalog.products;
+    const sharedDiscount = getSharedDiscount();
     state.settings = {
       storeName: state.settings?.storeName || state.serverConfig.storeName,
       whatsappNumber:
         state.settings?.whatsappNumber || state.serverConfig.whatsappNumber,
       discount:
-        state.settings?.discount ?? state.serverConfig.defaultDiscount,
+        sharedDiscount ??
+        state.settings?.discount ??
+        state.serverConfig.defaultDiscount,
       hideOutOfStock: state.settings?.hideOutOfStock ?? false,
       specialPrices: state.settings?.specialPrices || {},
     };
@@ -151,6 +155,7 @@ function bindEvents() {
   });
 
   elements.saveSettings.addEventListener("click", saveSettings);
+  elements.copySalesLink.addEventListener("click", copySalesLink);
   elements.resetSettings.addEventListener("click", resetSettings);
   elements.checkoutForm.addEventListener("submit", submitOrder);
 }
@@ -460,9 +465,19 @@ function saveSettings() {
     specialPrices,
   };
   localStorage.setItem("direct-settings", JSON.stringify(state.settings));
+  updateSharedDiscountUrl(state.settings.discount);
   renderAll();
   closeDrawers();
   showToast("Ajustes guardados");
+}
+
+async function copySalesLink() {
+  const discount = clamp(Number(elements.settingDiscount.value), 0, 30);
+  const url = new URL(window.location.href);
+  url.hash = "";
+  url.searchParams.set("descuento", String(discount));
+  await navigator.clipboard.writeText(url.toString());
+  showToast(`Link de venta con ${formatNumber(discount)}% copiado`);
 }
 
 function resetSettings() {
@@ -492,6 +507,19 @@ function getDirectPrice(product, variant) {
   if (Number.isFinite(special) && special >= 0) return special;
   const discount = clamp(Number(state.settings.discount), 0, 30);
   return roundPrice(variant.price * (1 - discount / 100));
+}
+
+function getSharedDiscount() {
+  const value = new URLSearchParams(window.location.search).get("descuento");
+  if (value === null || value === "") return null;
+  const discount = Number(value);
+  return Number.isFinite(discount) ? clamp(discount, 0, 30) : null;
+}
+
+function updateSharedDiscountUrl(discount) {
+  const url = new URL(window.location.href);
+  url.searchParams.set("descuento", String(clamp(Number(discount), 0, 30)));
+  history.replaceState(null, "", url);
 }
 
 function minDirectPrice(product) {
