@@ -42,7 +42,10 @@ test("prepara un pedido con descuento y nota de origen", () => {
   assert.equal(result.payload.discount, "3000.00");
   assert.equal(result.payload.sale_channel, "App WhatsApp");
   assert.match(result.payload.note, /PEDIDO ORIGINADO EN APP WHATSAPP/);
+  assert.match(result.payload.note, /Avenida Siempre Viva 742 2 B/);
   assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
+  assert.equal("shipping" in result.payload, false);
+  assert.equal("cpf_cnpj" in result.payload, false);
 });
 
 test("rechaza precios con descuento superior al permitido", () => {
@@ -84,7 +87,7 @@ test("muestra los errores estructurados de Tiendanube", () => {
   );
 });
 
-test("omite campos opcionales vacíos", () => {
+test("conserva los datos de entrega en la nota interna", () => {
   const result = prepareDraftOrder(
     {
       customer: { ...customer, document: "", floor: "", locality: "" },
@@ -94,6 +97,7 @@ test("omite campos opcionales vacíos", () => {
   );
 
   assert.equal("cpf_cnpj" in result.payload, false);
-  assert.equal("floor" in result.payload.shipping.shipping_address, false);
-  assert.equal("locality" in result.payload.shipping.shipping_address, false);
+  assert.equal("shipping" in result.payload, false);
+  assert.match(result.payload.note, /Entrega: Avenida Siempre Viva 742/);
+  assert.match(result.payload.note, /Localidad: CABA, Buenos Aires, 1425/);
 });
