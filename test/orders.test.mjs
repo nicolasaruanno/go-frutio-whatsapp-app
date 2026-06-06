@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { prepareDraftOrder } from "../lib/orders.mjs";
+import { apiErrorMessage, prepareDraftOrder } from "../lib/orders.mjs";
 
 const products = [
   {
@@ -72,4 +72,28 @@ test("rechaza cantidades superiores al stock", () => {
       ),
     /stock/i,
   );
+});
+
+test("muestra los errores estructurados de Tiendanube", () => {
+  assert.equal(
+    apiErrorMessage(
+      { errors: { products: ["La variante no está disponible"] } },
+      "Error",
+    ),
+    "Tiendanube: La variante no está disponible",
+  );
+});
+
+test("omite campos opcionales vacíos", () => {
+  const result = prepareDraftOrder(
+    {
+      customer: { ...customer, document: "", floor: "", locality: "" },
+      items: [{ variantId: "20", quantity: 1, directPrice: 8500 }],
+    },
+    products,
+  );
+
+  assert.equal("cpf_cnpj" in result.payload, false);
+  assert.equal("floor" in result.payload.shipping.shipping_address, false);
+  assert.equal("locality" in result.payload.shipping.shipping_address, false);
 });
