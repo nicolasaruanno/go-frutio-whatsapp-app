@@ -81,10 +81,13 @@ async function init() {
     const catalog = await productsResponse.json();
     state.products = catalog.products;
     const sharedDiscount = getSharedDiscount();
+    const storedWhatsapp = state.settings?.whatsappNumber;
     state.settings = {
       storeName: state.settings?.storeName || state.serverConfig.storeName,
       whatsappNumber:
-        state.settings?.whatsappNumber || state.serverConfig.whatsappNumber,
+        !storedWhatsapp || storedWhatsapp === "5491112345678"
+          ? state.serverConfig.whatsappNumber
+          : storedWhatsapp,
       discount:
         sharedDiscount ??
         state.settings?.discount ??
