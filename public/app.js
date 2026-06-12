@@ -1,5 +1,6 @@
 const defaultSpecialPrices = {
   "348137539": 50000,
+  "349266408": 50000,
 };
 
 const state = {
@@ -535,6 +536,7 @@ function updateConnectionNotice(source) {
 function getDirectPrice(product, variant) {
   const special = Number(state.settings.specialPrices[product.id]);
   if (Number.isFinite(special) && special >= 0) return special;
+  if (product.name.trim().toUpperCase() === "FRUTILLAS PREMIUM") return 50000;
   const discount = clamp(Number(state.settings.discount), 0, 30);
   return roundPrice(variant.price * (1 - discount / 100));
 }
