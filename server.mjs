@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import {
   applyAppPrices,
   clamp,
+  fetchGoogleSheetPrices,
   fetchTiendanubeProducts,
   getCatalog,
   getPublicConfig,
@@ -214,6 +215,7 @@ async function loadEnv(filePath) {
 export {
   applyAppPrices,
   clamp,
+  fetchGoogleSheetPrices,
   localizedText,
   normalizeProduct,
   parseCsv,

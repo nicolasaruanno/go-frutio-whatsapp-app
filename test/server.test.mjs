@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   applyAppPrices,
   clamp,
+  fetchGoogleSheetPrices,
   localizedText,
   normalizeProduct,
   parseCsv,
@@ -85,4 +86,27 @@ test("aplica el precio de la app por variante", () => {
   ];
   applyAppPrices(products, new Map([["20", 50000]]));
   assert.equal(products[0].variants[0].appPrice, 50000);
+});
+
+test("lee encabezados en español del panel publicado", async () => {
+  const previousUrl = process.env.GOOGLE_SHEET_PRICES_CSV_URL;
+  const previousFetch = global.fetch;
+  process.env.GOOGLE_SHEET_PRICES_CSV_URL = "https://example.com/precios.csv";
+  global.fetch = async () => ({
+    ok: true,
+    text: async () =>
+      "Producto ID,Variante ID,Producto,Precio app\n10,20,Frutillas,50000\n",
+  });
+
+  try {
+    const prices = await fetchGoogleSheetPrices();
+    assert.equal(prices.get("20"), 50000);
+  } finally {
+    global.fetch = previousFetch;
+    if (previousUrl === undefined) {
+      delete process.env.GOOGLE_SHEET_PRICES_CSV_URL;
+    } else {
+      process.env.GOOGLE_SHEET_PRICES_CSV_URL = previousUrl;
+    }
+  }
 });
