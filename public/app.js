@@ -92,7 +92,7 @@ async function init() {
         sharedDiscount ??
         state.settings?.discount ??
         state.serverConfig.defaultDiscount,
-      hideOutOfStock: state.settings?.hideOutOfStock ?? false,
+      hideOutOfStock: true,
       specialPrices: {
         ...defaultSpecialPrices,
         ...(state.settings?.specialPrices || {}),
@@ -197,7 +197,7 @@ function renderProducts() {
     const haystack = `${product.name} ${product.description}`.toLowerCase();
     const matchesSearch = haystack.includes(state.search);
     const hasStock = product.variants.some(isInStock);
-    return matchesSearch && (!state.settings.hideOutOfStock || hasStock);
+    return matchesSearch && hasStock;
   });
 
   products = [...products].sort((a, b) => {
@@ -212,12 +212,11 @@ function renderProducts() {
 }
 
 function productCardHtml(product) {
-  const firstAvailable =
-    product.variants.find((variant) => isInStock(variant)) || product.variants[0];
+  const availableVariants = product.variants.filter(isInStock);
+  const firstAvailable = availableVariants[0];
   if (!firstAvailable) return "";
   const directPrice = getDirectPrice(product, firstAvailable);
   const reduction = getReductionPercent(firstAvailable.price, directPrice);
-  const hasStock = product.variants.some(isInStock);
 
   return `
     <article class="product-card" data-product-id="${escapeHtml(product.id)}">
@@ -229,11 +228,11 @@ function productCardHtml(product) {
         <h3>${escapeHtml(product.name)}</h3>
         <p class="product-description">${escapeHtml(product.description || "Consultanos por más detalles.")}</p>
         <select class="variant-select" aria-label="Elegir variante de ${escapeHtml(product.name)}">
-          ${product.variants
+          ${availableVariants
             .map(
               (variant) => `
-                <option value="${escapeHtml(variant.id)}" ${variant.id === firstAvailable.id ? "selected" : ""} ${!isInStock(variant) ? "disabled" : ""}>
-                  ${escapeHtml(variant.name)}${!isInStock(variant) ? " · Sin stock" : ""}
+                <option value="${escapeHtml(variant.id)}" ${variant.id === firstAvailable.id ? "selected" : ""}>
+                  ${escapeHtml(variant.name)}
                 </option>`,
             )
             .join("")}
@@ -242,8 +241,8 @@ function productCardHtml(product) {
           <span class="direct-price">${formatMoney(directPrice)}</span>
           ${directPrice < firstAvailable.price ? `<span class="original-price">${formatMoney(firstAvailable.price)}</span>` : ""}
         </div>
-        <button class="add-button" data-add data-product-id="${escapeHtml(product.id)}" ${!hasStock ? "disabled" : ""}>
-          ${hasStock ? "Agregar al pedido" : "Sin stock"}
+        <button class="add-button" data-add data-product-id="${escapeHtml(product.id)}">
+          Agregar al pedido
         </button>
       </div>
     </article>`;
@@ -486,7 +485,7 @@ function saveSettings() {
     storeName: elements.settingStoreName.value.trim() || "Catálogo directo",
     whatsappNumber: elements.settingWhatsapp.value.replace(/\D/g, ""),
     discount: clamp(Number(elements.settingDiscount.value), 0, 30),
-    hideOutOfStock: elements.settingHideOutOfStock.checked,
+    hideOutOfStock: true,
     specialPrices,
     paymentAlias: elements.settingPaymentAlias.value.trim() || "go.frutio",
   };
@@ -516,7 +515,7 @@ function resetSettings() {
     storeName: state.serverConfig.storeName,
     whatsappNumber: state.serverConfig.whatsappNumber,
     discount: state.serverConfig.defaultDiscount,
-    hideOutOfStock: false,
+    hideOutOfStock: true,
     specialPrices: { ...defaultSpecialPrices },
     paymentAlias: "go.frutio",
   };
