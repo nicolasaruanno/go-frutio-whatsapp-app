@@ -1,3 +1,7 @@
+const defaultSpecialPrices = {
+  "348137539": 50000,
+};
+
 const state = {
   products: [],
   cart: JSON.parse(localStorage.getItem("direct-cart") || "[]"),
@@ -88,7 +92,10 @@ async function init() {
         state.settings?.discount ??
         state.serverConfig.defaultDiscount,
       hideOutOfStock: state.settings?.hideOutOfStock ?? false,
-      specialPrices: state.settings?.specialPrices || {},
+      specialPrices: {
+        ...defaultSpecialPrices,
+        ...(state.settings?.specialPrices || {}),
+      },
       paymentAlias:
         getSharedText("alias") || state.settings?.paymentAlias || "go.frutio",
     };
@@ -509,7 +516,7 @@ function resetSettings() {
     whatsappNumber: state.serverConfig.whatsappNumber,
     discount: state.serverConfig.defaultDiscount,
     hideOutOfStock: false,
-    specialPrices: {},
+    specialPrices: { ...defaultSpecialPrices },
     paymentAlias: "go.frutio",
   };
   populateSettings();

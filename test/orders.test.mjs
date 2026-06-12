@@ -79,6 +79,19 @@ test("rechaza cantidades superiores al stock", () => {
   );
 });
 
+test("permite un precio especial con hasta 40% de descuento", () => {
+  const result = prepareDraftOrder(
+    {
+      customer,
+      items: [{ variantId: "20", quantity: 1, directPrice: 6666.67 }],
+    },
+    products,
+    { maxDiscount: 40 },
+  );
+
+  assert.equal(result.total, 6666.67);
+});
+
 test("muestra los errores estructurados de Tiendanube", () => {
   assert.equal(
     apiErrorMessage(
