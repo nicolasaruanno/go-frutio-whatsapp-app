@@ -1608,7 +1608,7 @@ footer {
     height: 100%;
     inset: 0;
     margin: 0;
-    object-fit: cover;
+    object-fit: fill;
     object-position: center;
     box-shadow: none;
   }
