@@ -31,7 +31,6 @@ test("prepara un pedido con descuento y nota de origen", () => {
     {
       reference: "web-123",
       customer,
-      shippingCost: 5000,
       paymentAlias: "go.frutio",
       items: [{ variantId: "20", quantity: 2, directPrice: 8500 }],
     },
@@ -46,7 +45,7 @@ test("prepara un pedido con descuento y nota de origen", () => {
   assert.match(result.payload.note, /PEDIDO ORIGINADO EN APP WHATSAPP/);
   assert.match(result.payload.note, /Avenida Siempre Viva 742 2 B/);
   assert.match(result.payload.note, /Transferencia pendiente al alias: go.frutio/);
-  assert.equal(result.payload.shipping.cost, "5000.00");
+  assert.equal(result.payload.shipping.cost, "0.00");
   assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
   assert.equal("cpf_cnpj" in result.payload, false);
 });

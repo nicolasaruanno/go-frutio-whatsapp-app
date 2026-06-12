@@ -176,7 +176,7 @@
           <span>Total final</span>
           <strong id="cart-total">$0</strong>
         </div>
-        <p class="total-note" id="shipping-note"></p>
+        <p class="total-note">Entrega sin cargo dentro del country.</p>
         <div class="checkout-title">
           <strong>Datos para el pedido</strong>
           <small>Los mismos datos básicos que usamos para cargarlo en Tiendanube.</small>
@@ -272,15 +272,6 @@
           </div>
         </label>
         <label>
-          Costo de envío
-          <input id="setting-shipping-cost" type="number" min="0" step="100" />
-          <small>Se suma cuando el pedido no alcanza el mínimo.</small>
-        </label>
-        <label>
-          Envío gratis desde
-          <input id="setting-free-shipping-threshold" type="number" min="0" step="1000" />
-        </label>
-        <label>
           Alias para transferencias
           <input id="setting-payment-alias" autocomplete="off" />
         </label>
@@ -310,6 +301,6 @@
     </aside>
 
     <div class="toast hidden" id="toast"></div>
-    <script type="module" src="/app.js?v=7"></script>
+    <script type="module" src="/app.js?v=8"></script>
   </body>
 </html>
