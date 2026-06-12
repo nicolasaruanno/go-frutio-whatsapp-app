@@ -534,6 +534,8 @@ function updateConnectionNotice(source) {
 }
 
 function getDirectPrice(product, variant) {
+  const sheetPrice = Number(variant.appPrice);
+  if (Number.isFinite(sheetPrice) && sheetPrice >= 0) return sheetPrice;
   const special = Number(state.settings.specialPrices[product.id]);
   if (Number.isFinite(special) && special >= 0) return special;
   if (product.name.trim().toUpperCase() === "FRUTILLAS PREMIUM") return 50000;

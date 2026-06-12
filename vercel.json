@@ -20,6 +20,10 @@
       "dest": "/api/products.mjs"
     },
     {
+      "src": "/api/tiendanube-prices.csv",
+      "dest": "/api/tiendanube-prices.mjs"
+    },
+    {
       "src": "/api/orders",
       "dest": "/api/orders.mjs"
     },

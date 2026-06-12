@@ -3,11 +3,15 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import {
+  applyAppPrices,
   clamp,
+  fetchTiendanubeProducts,
   getCatalog,
   getPublicConfig,
   localizedText,
   normalizeProduct,
+  parseCsv,
+  parseSheetNumber,
   sanitizePhone,
   stripHtml,
 } from "./lib/catalog.mjs";
@@ -37,6 +41,47 @@ const server = createServer(async (request, response) => {
           error:
             "No pudimos sincronizar Tiendanube. Revisá el ID de tienda, el token y el permiso read_products.",
         });
+      }
+    }
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/api/tiendanube-prices.csv"
+    ) {
+      try {
+        const products = await fetchTiendanubeProducts();
+        const rows = [
+          [
+            "Variant ID",
+            "Product ID",
+            "Producto",
+            "Variante",
+            "SKU",
+            "Stock",
+            "Precio Tiendanube",
+            "Transferencia 10% OFF",
+          ],
+        ];
+        for (const product of products) {
+          for (const variant of product.variants || []) {
+            rows.push([
+              variant.id,
+              product.id,
+              product.name,
+              variant.name,
+              variant.sku,
+              variant.stock ?? "",
+              variant.price,
+              Math.round(variant.price * 0.9),
+            ]);
+          }
+        }
+        return sendCsv(response, 200, rows);
+      } catch (error) {
+        console.error("No se pudo generar el feed de precios:", error);
+        return sendCsv(response, 502, [
+          ["Error", "No se pudo sincronizar Tiendanube."],
+        ]);
       }
     }
 
@@ -117,6 +162,22 @@ function sendJson(response, status, body) {
   response.end(JSON.stringify(body));
 }
 
+function sendCsv(response, status, rows) {
+  response.writeHead(status, {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Cache-Control": "no-store",
+  });
+  response.end(
+    rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
+          .join(","),
+      )
+      .join("\n"),
+  );
+}
+
 function mimeType(filePath) {
   return (
     {
@@ -151,9 +212,12 @@ async function loadEnv(filePath) {
 }
 
 export {
+  applyAppPrices,
   clamp,
   localizedText,
   normalizeProduct,
+  parseCsv,
+  parseSheetNumber,
   sanitizePhone,
   stripHtml,
 };

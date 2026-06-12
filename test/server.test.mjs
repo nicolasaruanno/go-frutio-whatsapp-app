@@ -1,9 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  applyAppPrices,
   clamp,
   localizedText,
   normalizeProduct,
+  parseCsv,
+  parseSheetNumber,
   sanitizePhone,
   stripHtml,
 } from "../server.mjs";
@@ -62,4 +65,24 @@ test("normalizeProduct adapta productos y variantes de Tiendanube", () => {
       },
     ],
   });
+});
+
+test("lee CSV de Google Sheets con comas y comillas", () => {
+  assert.deepEqual(parseCsv('Variant ID,Producto,Precio app\n20,"Peras, premium","50.000"\n'), [
+    ["Variant ID", "Producto", "Precio app"],
+    ["20", "Peras, premium", "50.000"],
+  ]);
+});
+
+test("convierte precios formateados por Google Sheets", () => {
+  assert.equal(parseSheetNumber("$ 50.000"), 50000);
+  assert.equal(parseSheetNumber("50,000.50"), 50000.5);
+});
+
+test("aplica el precio de la app por variante", () => {
+  const products = [
+    { id: "10", variants: [{ id: "20", price: 60000 }] },
+  ];
+  applyAppPrices(products, new Map([["20", 50000]]));
+  assert.equal(products[0].variants[0].appPrice, 50000);
 });
