@@ -1550,6 +1550,29 @@ footer {
 }
 
 @media (max-width: 760px) {
+  #cart-drawer {
+    display: block;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  #cart-drawer .drawer-header {
+    position: sticky;
+    z-index: 2;
+    top: 0;
+    background: #fff;
+  }
+
+  #cart-drawer .cart-items {
+    overflow: visible;
+    flex: none;
+  }
+
+  #cart-drawer .checkout {
+    overflow: visible;
+    max-height: none;
+  }
+
   .announcement-bar {
     font-size: 10px;
   }
