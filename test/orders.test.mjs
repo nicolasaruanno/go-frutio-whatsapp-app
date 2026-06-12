@@ -46,6 +46,15 @@ test("prepara un pedido con descuento y nota de origen", () => {
   assert.match(result.payload.note, /Avenida Siempre Viva 742 2 B/);
   assert.match(result.payload.note, /Transferencia pendiente al alias: go.frutio/);
   assert.equal(result.payload.shipping.cost, "0.00");
+  assert.deepEqual(result.payload.shipping.shipping_address, {
+    address: "Avenida Siempre Viva",
+    number: "742",
+    floor: "2 B",
+    locality: "Palermo",
+    city: "CABA",
+    province: "Buenos Aires",
+    zipcode: "1425",
+  });
   assert.deepEqual(result.payload.products, [{ variant_id: 20, quantity: 2 }]);
   assert.equal("cpf_cnpj" in result.payload, false);
 });
