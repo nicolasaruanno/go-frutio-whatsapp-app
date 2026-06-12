@@ -60,6 +60,8 @@ const elements = {
   copySalesLink: document.querySelector("#copy-sales-link"),
   resetSettings: document.querySelector("#reset-settings"),
   toast: document.querySelector("#toast"),
+  toastMessage: document.querySelector("#toast-message"),
+  toastAction: document.querySelector("#toast-action"),
 };
 
 init();
@@ -160,6 +162,10 @@ function bindEvents() {
   });
 
   elements.cartButton.addEventListener("click", () => openDrawer(elements.cartDrawer));
+  elements.toastAction.addEventListener("click", () => {
+    elements.toast.classList.add("hidden");
+    openDrawer(elements.cartDrawer);
+  });
   elements.settingsButton.addEventListener("click", () => {
     populateSettings();
     openDrawer(elements.settingsDrawer);
@@ -620,17 +626,24 @@ function closeDrawers() {
 }
 
 let toastTimer;
-function showToast(message) {
+function showToast(message, options = {}) {
   clearTimeout(toastTimer);
-  elements.toast.textContent = message;
+  elements.toastMessage.textContent = message;
+  elements.toastAction.classList.toggle("hidden", !options.showCartAction);
   elements.toast.classList.remove("hidden");
-  toastTimer = setTimeout(() => elements.toast.classList.add("hidden"), 2400);
+  toastTimer = setTimeout(
+    () => elements.toast.classList.add("hidden"),
+    options.duration || 2400,
+  );
 }
 
 let addFeedbackTimer;
 function showAddedFeedback(button, productName) {
   clearTimeout(addFeedbackTimer);
-  showToast(`✓ ${productName} se agregó al pedido`);
+  showToast(`✓ ${productName} se agregó al pedido`, {
+    showCartAction: true,
+    duration: 5000,
+  });
 
   elements.cartButton.classList.remove("cart-pulse");
   void elements.cartButton.offsetWidth;

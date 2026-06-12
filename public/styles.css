@@ -930,7 +930,10 @@ footer p {
   z-index: 70;
   right: 24px;
   bottom: 24px;
+  display: flex;
   max-width: min(360px, calc(100% - 48px));
+  align-items: center;
+  gap: 14px;
   padding: 13px 17px;
   border-radius: 10px;
   color: white;
@@ -938,6 +941,28 @@ footer p {
   box-shadow: var(--shadow);
   font-size: 13px;
   font-weight: 600;
+}
+
+.toast > span {
+  flex: 1;
+}
+
+.toast-action {
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid #fff;
+  color: #fff;
+  background: transparent;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.toast-action:hover,
+.toast-action:focus-visible {
+  color: var(--ink);
+  background: #fff;
 }
 
 .add-button.added {
@@ -1628,12 +1653,19 @@ footer {
     width: auto;
     max-width: none;
     min-height: 62px;
-    padding: 18px 20px;
+    padding: 12px;
     border: 2px solid #fff;
     box-shadow: 0 10px 34px rgba(0, 73, 58, 0.28);
     font-size: 15px;
     line-height: 1.35;
-    text-align: center;
+    text-align: left;
+  }
+
+  .toast-action {
+    min-height: 46px;
+    padding-inline: 15px;
+    flex: 0 0 auto;
+    font-size: 11px;
   }
 
   .brand-statement {
