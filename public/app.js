@@ -194,7 +194,7 @@ function applyBranding() {
   elements.footerStoreName.textContent = name;
   elements.heroDiscount.textContent =
     discount > 0 ? `${formatNumber(discount)}% OFF` : "PRECIO ÚNICO";
-  document.title = `${name} · Catálogo directo`;
+  document.title = "Go Frutio - Premium Fruit Suppliers";
 }
 
 function renderProducts() {
