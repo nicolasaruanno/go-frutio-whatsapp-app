@@ -940,6 +940,29 @@ footer p {
   font-weight: 600;
 }
 
+.add-button.added {
+  color: #fff;
+  background: #006b56;
+  transform: scale(0.985);
+}
+
+.cart-button.cart-pulse {
+  animation: cart-pulse 650ms ease-out;
+}
+
+@keyframes cart-pulse {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.16);
+    box-shadow: 0 0 0 8px rgba(0, 73, 58, 0.16);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 .hidden {
   display: none !important;
 }
@@ -1570,9 +1593,47 @@ footer {
 
 @media (max-width: 480px) {
   .cart-button {
-    width: 44px;
-    padding: 10px;
-    border: 0;
+    position: relative;
+    width: 58px;
+    min-width: 58px;
+    height: 52px;
+    justify-content: center;
+    padding: 0 19px 0 10px;
+    border: 2px solid var(--ink);
+    background: #fff;
+  }
+
+  .cart-button svg {
+    width: 25px;
+    height: 25px;
+    stroke-width: 2.1;
+  }
+
+  .cart-button b {
+    position: absolute;
+    top: -9px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    border: 3px solid #fff;
+    font-size: 14px;
+    font-weight: 800;
+  }
+
+  .toast {
+    top: 14px;
+    right: 12px;
+    bottom: auto;
+    left: 12px;
+    width: auto;
+    max-width: none;
+    min-height: 62px;
+    padding: 18px 20px;
+    border: 2px solid #fff;
+    box-shadow: 0 10px 34px rgba(0, 73, 58, 0.28);
+    font-size: 15px;
+    line-height: 1.35;
+    text-align: center;
   }
 
   .brand-statement {

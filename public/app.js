@@ -276,6 +276,9 @@ function addToCart(productId, variantId) {
   const product = state.products.find((item) => item.id === productId);
   const variant = product?.variants.find((item) => item.id === variantId);
   if (!product || !variant || !isInStock(variant)) return;
+  const addButton = document.querySelector(
+    `[data-add][data-product-id="${CSS.escape(productId)}"]`,
+  );
   const key = `${productId}:${variantId}`;
   const existing = state.cart.find((item) => item.key === key);
   if (existing) {
@@ -287,7 +290,7 @@ function addToCart(productId, variantId) {
   }
   persistCart();
   renderCart();
-  showToast(`${product.name} se agregó al pedido`);
+  showAddedFeedback(addButton, product.name);
 }
 
 function renderCart() {
@@ -622,6 +625,26 @@ function showToast(message) {
   elements.toast.textContent = message;
   elements.toast.classList.remove("hidden");
   toastTimer = setTimeout(() => elements.toast.classList.add("hidden"), 2400);
+}
+
+let addFeedbackTimer;
+function showAddedFeedback(button, productName) {
+  clearTimeout(addFeedbackTimer);
+  showToast(`✓ ${productName} se agregó al pedido`);
+
+  elements.cartButton.classList.remove("cart-pulse");
+  void elements.cartButton.offsetWidth;
+  elements.cartButton.classList.add("cart-pulse");
+
+  if (!button) return;
+  const originalLabel = button.dataset.originalLabel || button.textContent.trim();
+  button.dataset.originalLabel = originalLabel;
+  button.textContent = "AGREGADO ✓";
+  button.classList.add("added");
+  addFeedbackTimer = setTimeout(() => {
+    button.textContent = originalLabel;
+    button.classList.remove("added");
+  }, 1800);
 }
 
 function formatMoney(value) {
