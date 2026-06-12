@@ -642,7 +642,7 @@ function showAddedFeedback(button, productName) {
   clearTimeout(addFeedbackTimer);
   showToast(`✓ ${productName} se agregó al pedido`, {
     showCartAction: true,
-    duration: 5000,
+    duration: 8000,
   });
 
   elements.cartButton.classList.remove("cart-pulse");
