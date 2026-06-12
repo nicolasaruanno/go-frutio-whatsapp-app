@@ -1297,6 +1297,25 @@ body {
   line-height: 1.35;
 }
 
+.box-showcase {
+  display: grid;
+  margin-top: -90px;
+  padding: 0 24px 50px;
+  place-items: center;
+  background: #fff;
+}
+
+.box-showcase a {
+  display: block;
+  width: min(920px, 100%);
+}
+
+.box-showcase img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
 .process-section {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -1584,6 +1603,15 @@ footer {
 
   .brand-logo {
     width: 135px;
+  }
+
+  .box-showcase {
+    margin-top: -62px;
+    padding: 0 0 28px;
+  }
+
+  .box-showcase a {
+    width: 100%;
   }
 
   .main-nav {
