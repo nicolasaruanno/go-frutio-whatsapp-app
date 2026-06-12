@@ -210,6 +210,9 @@ function renderProducts() {
     if (state.sort === "price-asc") return minDirectPrice(a) - minDirectPrice(b);
     if (state.sort === "price-desc") return minDirectPrice(b) - minDirectPrice(a);
     if (state.sort === "name") return a.name.localeCompare(b.name, "es");
+    const aIsStrawberry = a.name.trim().toUpperCase() === "FRUTILLAS PREMIUM";
+    const bIsStrawberry = b.name.trim().toUpperCase() === "FRUTILLAS PREMIUM";
+    if (aIsStrawberry !== bIsStrawberry) return aIsStrawberry ? -1 : 1;
     return 0;
   });
 
@@ -454,7 +457,7 @@ function openWhatsAppOrder(items, customer, order) {
     `*TOTAL A TRANSFERIR: ${formatMoney(totals.direct)}*`,
     "",
     `Transferencia al alias: *${state.settings.paymentAlias}*`,
-    "*Pago pendiente.* Adjunto el comprobante en este chat para confirmar el pedido.",
+    "*Pago pendiente.* Adjuntar el comprobante en este chat para confirmar el pedido.",
     "",
     "Gracias.",
   ].filter((line, index, all) => line || all[index - 1] !== "");
